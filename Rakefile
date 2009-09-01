@@ -77,22 +77,21 @@ begin
   require 'echoe'
 
   Echoe.new('thrift') do |p|
-    p.author = ['Kevin Ballard', 'Kevin Clark', 'Mark Slee']
+    p.author = ['Kevin Ballard', 'Kevin Clark', 'Mark Slee', 'Evan Weaver']
     p.project = "fauna"
-    p.email = ['kevin@sb.org', 'kevin.clark@gmail.com', 'mcslee@facebook.com']
     p.summary = "Ruby libraries for Thrift (a language-agnostic RPC system)"
-    p.url = "http://incubator.apache.org/thrift/"
     p.include_rakefile = true
-    p.version = "0.0.789419"
+    p.version = "0.0.789419.1"
+    p.url = "http://blog.evanweaver.com/files/doc/fauna/thrift/"
+    p.docs_host = "blog.evanweaver.com:~/www/bax/public/files/doc/"
   end
 
   task :install => [:check_site_lib]
 
   require 'rbconfig'
   task :check_site_lib do
-    if File.exist?(File.join(Config::CONFIG['sitelibdir'], 'thrift.rb'))
-      fail "thrift is already installed in site_ruby"
-    end
+    file = File.join(Config::CONFIG['sitelibdir'], 'thrift')    
+    fail "Thrift is already installed in site_ruby: #{file}*\nPlease remove it if you want to continue." if File.exist?(file)
   end
 rescue LoadError
   [:install, :package].each do |t|
