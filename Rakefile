@@ -79,9 +79,8 @@ begin
   Echoe.new('thrift') do |p|
     p.author = ['Kevin Ballard', 'Kevin Clark', 'Mark Slee', 'Evan Weaver']
     p.project = "fauna"
-    p.summary = "Ruby libraries for Thrift (a language-agnostic RPC system)"
+    p.summary = "Ruby libraries for Thrift, with fixes."
     p.include_rakefile = true
-    p.version = "0.0.810255.1"
     p.url = "http://blog.evanweaver.com/files/doc/fauna/thrift/"
     p.docs_host = "blog.evanweaver.com:~/www/bax/public/files/doc/"
   end
