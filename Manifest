@@ -1,10 +1,10 @@
 CHANGELOG
+Makefile.am
 Manifest
-Rakefile
 README
-setup.rb
-benchmark/benchmark.rb
+Rakefile
 benchmark/Benchmark.thrift
+benchmark/benchmark.rb
 benchmark/client.rb
 benchmark/server.rb
 benchmark/thin_server.rb
@@ -12,6 +12,8 @@ ext/binary_protocol_accelerated.c
 ext/binary_protocol_accelerated.h
 ext/compact_protocol.c
 ext/compact_protocol.h
+ext/conftest.dSYM/Contents/Info.plist
+ext/conftest.dSYM/Contents/Resources/DWARF/conftest
 ext/constants.h
 ext/extconf.rb
 ext/macros.h
@@ -25,12 +27,9 @@ ext/thrift_native.c
 lib/thrift.rb
 lib/thrift/client.rb
 lib/thrift/core_ext.rb
+lib/thrift/core_ext/fixnum.rb
 lib/thrift/exceptions.rb
 lib/thrift/processor.rb
-lib/thrift/struct.rb
-lib/thrift/thrift_native.rb
-lib/thrift/types.rb
-lib/thrift/core_ext/fixnum.rb
 lib/thrift/protocol/base_protocol.rb
 lib/thrift/protocol/binary_protocol.rb
 lib/thrift/protocol/binary_protocol_accelerated.rb
@@ -43,6 +42,8 @@ lib/thrift/server/nonblocking_server.rb
 lib/thrift/server/simple_server.rb
 lib/thrift/server/thread_pool_server.rb
 lib/thrift/server/threaded_server.rb
+lib/thrift/struct.rb
+lib/thrift/thrift_native.rb
 lib/thrift/transport/base_server_transport.rb
 lib/thrift/transport/base_transport.rb
 lib/thrift/transport/buffered_transport.rb
@@ -54,9 +55,12 @@ lib/thrift/transport/server_socket.rb
 lib/thrift/transport/socket.rb
 lib/thrift/transport/unix_server_socket.rb
 lib/thrift/transport/unix_socket.rb
+lib/thrift/types.rb
 script/proto_benchmark.rb
 script/read_struct.rb
 script/write_struct.rb
+setup.rb
+spec/ThriftSpec.thrift
 spec/base_protocol_spec.rb
 spec/base_transport_spec.rb
 spec/binary_protocol_accelerated_spec.rb
@@ -76,6 +80,5 @@ spec/socket_spec.rb
 spec/socket_spec_shared.rb
 spec/spec_helper.rb
 spec/struct_spec.rb
-spec/ThriftSpec.thrift
 spec/types_spec.rb
 spec/unix_socket_spec.rb
