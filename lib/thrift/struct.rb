@@ -1,22 +1,4 @@
-# 
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements. See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership. The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-# "License"); you may not use this file except in compliance
-# with the License. You may obtain a copy of the License at
-# 
-#   http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied. See the License for the
-# specific language governing permissions and limitations
-# under the License.
-# 
-
+require 'thrift/types'
 require 'set'
 
 module Thrift
@@ -57,7 +39,7 @@ module Thrift
       unless fields_with_default_values
         fields_with_default_values = {}
         struct_fields.each do |fid, field_def|
-          unless field_def[:default].nil?
+          if field_def[:default]
             fields_with_default_values[field_def[:name]] = field_def[:default]
           end
         end
@@ -78,19 +60,23 @@ module Thrift
       names_to_ids[name]
     end
 
+    # Obsoleted by THRIFT-246, which generates this method inline
+    # TODO: Should be removed at some point. -- Kevin Clark
+    def struct_fields
+      self.class.const_get(:FIELDS)
+    end
+
     def each_field
-      struct_fields.keys.sort.each do |fid|
-        data = struct_fields[fid]
-        yield fid, data
+      struct_fields.each do |fid, data|
+        yield fid, data[:type], data[:name], data[:default], data[:optional]
       end
     end
 
     def inspect(skip_optional_nulls = true)
       fields = []
-      each_field do |fid, field_info|
-        name = field_info[:name]
+      each_field do |fid, type, name, default, optional|
         value = instance_variable_get("@#{name}")
-        unless skip_optional_nulls && field_info[:optional] && value.nil?
+        unless skip_optional_nulls && optional && value.nil?
           fields << "#{name}:#{value.inspect}"
         end
       end
@@ -98,40 +84,48 @@ module Thrift
     end
 
     def read(iprot)
-      iprot.read_struct_begin
-      loop do
-        fname, ftype, fid = iprot.read_field_begin
-        break if (ftype == Types::STOP)
-        handle_message(iprot, fid, ftype)
-        iprot.read_field_end
+      # TODO(kevinclark): Make sure transport is C readable
+      if iprot.respond_to?(:decode_binary)
+        iprot.decode_binary(self, iprot.trans)
+      else
+        iprot.read_struct_begin
+        loop do
+          fname, ftype, fid = iprot.read_field_begin
+          break if (ftype == Types::STOP)
+          handle_message(iprot, fid, ftype)
+          iprot.read_field_end
+        end
+        iprot.read_struct_end
       end
-      iprot.read_struct_end
       validate
     end
 
     def write(oprot)
       validate
-      oprot.write_struct_begin(self.class.name)
-      each_field do |fid, field_info|
-        name = field_info[:name]
-        type = field_info[:type]
-        if (value = instance_variable_get("@#{name}"))
-          if is_container? type
-            oprot.write_field_begin(name, type, fid)
-            write_container(oprot, value, field_info)
-            oprot.write_field_end
-          else
-            oprot.write_field(name, type, fid, value)
+      # if oprot.respond_to?(:encode_binary)
+      #   # TODO(kevinclark): Clean this so I don't have to access the transport.
+      #   oprot.trans.write oprot.encode_binary(self)
+      # else
+        oprot.write_struct_begin(self.class.name)
+        each_field do |fid, type, name|
+          unless (value = instance_variable_get("@#{name}")).nil?
+            if is_container? type
+              oprot.write_field_begin(name, type, fid)
+              write_container(oprot, value, struct_fields[fid])
+              oprot.write_field_end
+            else
+              oprot.write_field(name, type, fid, value)
+            end
           end
         end
-      end
-      oprot.write_field_stop
-      oprot.write_struct_end
+        oprot.write_field_stop
+        oprot.write_struct_end
+      # end
     end
 
     def ==(other)
-      each_field do |fid, field_info|
-        name = field_info[:name]
+      return false unless other.is_a?(self.class)
+      each_field do |fid, type, name, default|
         return false unless self.instance_variable_get("@#{name}") == other.instance_variable_get("@#{name}")
       end
       true
@@ -141,26 +135,9 @@ module Thrift
       self.class == other.class && self == other
     end
 
+    # for the time being, we're ok with a naive hash. this could definitely be improved upon.
     def hash
-      field_values = []
-      each_field do |fid, field_info|
-        name = field_info[:name]
-        field_values << self.instance_variable_get("@#{name}")
-      end
-      field_values.hash
-    end
-
-    def differences(other)
-      diffs = []
-      unless other.is_a?(self.class)
-        diffs << "Different class!"
-      else
-        each_field do |fid, field_info|
-          name = field_info[:name]
-          diffs << "#{name} differs!" unless self.instance_variable_get("@#{name}") == other.instance_variable_get("@#{name}")
-        end
-      end
-      diffs
+      0
     end
 
     def self.field_accessor(klass, *fields)
@@ -279,12 +256,8 @@ module Thrift
       end
     end
 
-    CONTAINER_TYPES = []
-    CONTAINER_TYPES[Types::LIST] = true
-    CONTAINER_TYPES[Types::MAP] = true
-    CONTAINER_TYPES[Types::SET] = true
     def is_container?(type)
-      CONTAINER_TYPES[type]
+      [Types::LIST, Types::MAP, Types::SET].include? type
     end
 
     def field_info(field)
@@ -295,4 +268,5 @@ module Thrift
         :element => field[:element] }
     end
   end
+  deprecate_module! :ThriftStruct => Struct
 end
